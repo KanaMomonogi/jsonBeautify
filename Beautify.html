@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautify</title>
+</head>
+<style>
+    .wrapper {
+        width: 80%;
+        height: 100%;
+        margin: 0 auto;
+    }
+    
+    .textareaWrapper {
+        width: 100%;
+        height: 500px;
+        margin-top: 50px;
+    }
+    
+    .textareaWrapper textarea {
+        width: 100%;
+        height: 100%;
+        border: 2px dashed #ccc;
+        border-radius: 20px;
+        resize: none;
+    }
+    
+    .textareaWrapper textarea:focus {
+        outline: none;
+    }
+    
+    #fileElem {
+        display: none;
+    }
+    
+    .btnWrapper {
+        width: 50%;
+        margin: 0 auto;
+        margin-top: 50px;
+        text-align: center;
+    }
+    
+    .btnWrapper #createBtn {
+        width: 150px;
+        height: 50px;
+        border: 0;
+        background-color: green;
+        color: #fff;
+        font-size: 24px;
+        font-weight: bold;
+    }
+    /* syntax */
+    
+    pre {
+        border: 2px dashed #ccc;
+        padding: 5px;
+        border-radius: 15px;
+        margin-top: 50px;
+    }
+    
+    .string {
+        color: green;
+    }
+    
+    .number {
+        color: darkorange;
+    }
+    
+    .boolean {
+        color: blue;
+    }
+    
+    .null {
+        color: magenta;
+    }
+    
+    .key {
+        color: red;
+    }
+</style>
+
+<body>
+    <div class="wrapper">
+        <input type="file" id="fileElem" accept="text/plain" onchange="previewFile(this.files)">
+        <div class="textareaWrapper">
+            <textarea name="" id="jsonText"></textarea>
+        </div>
+        <div class="btnWrapper">
+            <button id="createBtn">
+                Beautify
+            </button>
+        </div>
+        <div class="beautifyWrapper">
+
+        </div>
+    </div>
+</body>
+<script>
+    window.onload = function() {
+
+        var createBtn = document.querySelector('#createBtn')
+        var dropArea = document.getElementById('jsonText')
+        var wrapper = document.querySelector('.beautifyWrapper');
+
+        dropArea.addEventListener('drop', function(e) {
+            e.preventDefault()
+            e.stopPropagation()
+            handleDrop(e)
+        }, false)
+
+        function handleDrop(e) {
+            var dt = e.dataTransfer
+            var files = dt.files
+
+            previewFile(files)
+        }
+
+        function previewFile(file) {
+
+            var fileread = new FileReader();
+            fileread.onload = function(e) {
+                var content = e.target.result;
+                dropArea.value = content;
+            };
+            fileread.readAsText(file[0]);
+
+        }
+
+        createBtn.addEventListener('click', function() {
+            try {
+                var jsonVal = document.querySelector('#jsonText').value
+                var jsonStr = JSON.parse(jsonVal)
+
+            } catch (error) {
+                console.log(error)
+            }
+
+            var str = null;
+            if (jsonStr != undefined) {
+                str = JSON.stringify(jsonStr, undefined, 4);
+                wrapper.appendChild(document.createElement('pre')).innerHTML = syntaxHighlight(str);
+            } else {
+                str = '<h4>Syntax Error<h4>'
+                wrapper.appendChild(document.createElement('pre')).innerHTML = str;
+            }
+
+
+        })
+
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+    }
+</script>
+
+</html>
